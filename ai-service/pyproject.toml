@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sscrms-ai-service"
+version = "2.0.0"
+description = "SSCRMS AI Microservice - Gemini-powered complaint analysis"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn==0.24.0",
+    "pydantic==2.4.2",
+    "google-generativeai==0.3.0",
+    "scikit-learn==1.3.2",
+    "pytesseract==0.3.10",
+    "PyMuPDF==1.23.7",
+    "redis==5.0.0",
+    "python-dotenv==1.0.0",
+    "httpx==0.25.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-asyncio==0.21.1",
+]

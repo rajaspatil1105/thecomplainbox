@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sscrms-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_password_123
+      MYSQL_DATABASE: sscrms_db
+      MYSQL_USER: sscrms_user
+      MYSQL_PASSWORD: sscrms_secure_password_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7.0
+    container_name: sscrms-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: sscrms_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./database/mongodb-init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sscrms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
+  mongo-data:
+  redis-data:
+
+networks:
+  default:
+    name: sscrms-network
