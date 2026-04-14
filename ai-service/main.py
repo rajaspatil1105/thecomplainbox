@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="SSCRMS AI Microservice",
+    title="The Complain Box AI Microservice",
     version="2.0.0",
     description="Gemini-powered complaint analysis and categorization"
 )
@@ -72,7 +72,7 @@ async def health_check():
     """
     return {
         'status': 'operational',
-        'service': 'SSCRMS AI Microservice',
+        'service': 'The Complain Box AI Microservice',
         'version': '2.0.0'
     }
 
@@ -201,7 +201,7 @@ async def global_exception_handler(exc: Exception):
 @app.on_event('startup')
 async def startup_event():
     logger.info('=================================================')
-    logger.info('SSCRMS AI Microservice Starting Up')
+    logger.info('The Complain Box AI Microservice Starting Up')
     logger.info('=================================================')
     logger.info(f'Service: Gemini 1.5 Flash Model')
     logger.info(f'TF-IDF Threshold: {TFIDF_THRESHOLD}')

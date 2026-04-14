@@ -3,12 +3,12 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: sscrms-mysql
+    container_name: thecomplainbox-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root_secure_password_123
-      MYSQL_DATABASE: sscrms_db
-      MYSQL_USER: sscrms_user
-      MYSQL_PASSWORD: sscrms_secure_password_123
+      MYSQL_DATABASE: thecomplainbox_db
+      MYSQL_USER: thecomplainbox_user
+      MYSQL_PASSWORD: thecomplainbox_secure_password_123
     ports:
       - "3306:3306"
     volumes:
@@ -22,9 +22,9 @@ services:
 
   mongodb:
     image: mongo:7.0
-    container_name: sscrms-mongodb
+    container_name: thecomplainbox-mongodb
     environment:
-      MONGO_INITDB_DATABASE: sscrms_db
+      MONGO_INITDB_DATABASE: thecomplainbox_db
     ports:
       - "27017:27017"
     volumes:
@@ -38,7 +38,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: sscrms-redis
+    container_name: thecomplainbox-redis
     ports:
       - "6379:6379"
     volumes:
@@ -56,4 +56,4 @@ volumes:
 
 networks:
   default:
-    name: sscrms-network
+    name: thecomplainbox-network

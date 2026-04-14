@@ -26,6 +26,7 @@ class DashboardController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name', 'category_tag']
           }
         ],
@@ -194,6 +195,7 @@ class DashboardController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name'],
             required: false
           }
@@ -298,6 +300,7 @@ class DashboardController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name', 'category_tag']
           }
         ],
@@ -325,6 +328,7 @@ class DashboardController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name', 'category_tag'],
             required: true
           }

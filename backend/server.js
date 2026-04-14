@@ -1,4 +1,5 @@
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -22,6 +23,38 @@ const adminRoutes = require('./routes/adminRoutes');
 // Initialize Express app
 const app = express();
 const PORT = process.env.BACKEND_PORT || 4000;
+
+const STARTUP_MAX_RETRIES = Number(process.env.STARTUP_MAX_RETRIES || 15);
+const STARTUP_RETRY_DELAY_MS = Number(process.env.STARTUP_RETRY_DELAY_MS || 3000);
+const MONGO_REQUIRED = String(process.env.MONGO_REQUIRED || 'false').toLowerCase() === 'true';
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const retryOperation = async (label, operation, { required = true } = {}) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= STARTUP_MAX_RETRIES; attempt++) {
+    try {
+      await operation();
+      console.log(`✓ ${label} successful`);
+      return true;
+    } catch (error) {
+      lastError = error;
+      console.error(`[${label}] attempt ${attempt}/${STARTUP_MAX_RETRIES} failed: ${error.message}`);
+
+      if (attempt < STARTUP_MAX_RETRIES) {
+        await sleep(STARTUP_RETRY_DELAY_MS);
+      }
+    }
+  }
+
+  if (required) {
+    throw lastError;
+  }
+
+  console.warn(`⚠ ${label} unavailable. Continuing in degraded mode.`);
+  return false;
+};
 
 // ============================================================================
 // MIDDLEWARE
@@ -84,13 +117,15 @@ const startServer = async () => {
     // Initialize Sequelize associations
     initializeAssociations();
 
-    // Test MySQL connection
-    await sequelize.authenticate();
-    console.log('✓ MySQL connected successfully');
+    // Test MySQL connection with retry
+    await retryOperation('MySQL connection', async () => {
+      await sequelize.authenticate();
+    });
 
-    // Test MongoDB connection
-    await connectMongoDB();
-    console.log('✓ MongoDB connected successfully');
+    // Test MongoDB connection with retry (optional by default)
+    await retryOperation('MongoDB connection', async () => {
+      await connectMongoDB();
+    }, { required: MONGO_REQUIRED });
 
     // Start Express server
     const server = app.listen(PORT, () => {
@@ -116,6 +151,14 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+});
 
 // Start server
 startServer();

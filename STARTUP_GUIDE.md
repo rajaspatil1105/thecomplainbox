@@ -1,4 +1,4 @@
-# SSCRMS v2.0 - Startup Guide
+# The Complain Box v2.0 - Startup Guide
 
 ## 📋 Current Status
 
@@ -78,7 +78,7 @@ If you don't have Docker, install these services locally:
 - Download: https://dev.mysql.com/downloads/mysql/
 - Install with default settings
 - Set root password to: `root_secure_password_123`
-- Create database: `sscrms_db`
+- Create database: `thecomplainbox_db`
 - Import schema: Run `database/schema.sql`
 
 #### MongoDB 7.0

@@ -1,5 +1,5 @@
 /**
- * MongoDB Schemas for SSCRMS v2.0
+ * MongoDB Schemas for The Complain Box v2.0
  * Collections for AI outputs and complaint messages
  */
 

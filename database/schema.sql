@@ -1,4 +1,4 @@
--- SSCRMS v2.0 - MySQL Database Schema
+-- The Complain Box v2.0 - MySQL Database Schema
 -- Production-grade complaint management system
 
 -- Drop existing objects if they exist (for clean restart)

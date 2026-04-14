@@ -4,7 +4,7 @@ services:
   # MySQL Database
   mysql:
     image: mysql:8.0
-    container_name: sscrms-mysql
+    container_name: thecomplainbox-mysql
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     environment:
@@ -21,16 +21,16 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - sscrms-network
+      - thecomplainbox-network
 
   # MongoDB
   mongodb:
     image: mongo:7.0
-    container_name: sscrms-mongodb
+    container_name: thecomplainbox-mongodb
     ports:
       - "${MONGO_PORT:-27017}:27017"
     environment:
-      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-sscrms_db}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-thecomplainbox_db}
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -39,30 +39,16 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - sscrms-network
+      - thecomplainbox-network
 
   # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: sscrms-redis
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - sscrms-network
 
   # Backend API (Node.js + Express)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: sscrms-backend
+    container_name: thecomplainbox-backend
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     environment:
@@ -72,7 +58,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MONGO_URI: mongodb://mongodb:27017/${MONGO_DATABASE:-sscrms_db}
+      MONGO_URI: mongodb://mongodb:27017/${MONGO_DATABASE:-thecomplainbox_db}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
@@ -93,14 +79,14 @@ services:
       - /app/node_modules
       - ./backend/uploads:/app/uploads
     networks:
-      - sscrms-network
+      - thecomplainbox-network
 
   # AI Microservice (Python + FastAPI)
   ai-service:
     build:
       context: ./ai-service
       dockerfile: Dockerfile
-    container_name: sscrms-ai-service
+    container_name: thecomplainbox-ai-service
     ports:
       - "${AI_SERVICE_PORT:-8000}:${AI_SERVICE_PORT:-8000}"
     environment:
@@ -119,14 +105,14 @@ services:
       - /app/__pycache__
       - ./backend/uploads:/app/uploads:ro
     networks:
-      - sscrms-network
+      - thecomplainbox-network
 
   # Frontend (React)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: sscrms-frontend
+    container_name: thecomplainbox-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
@@ -137,7 +123,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     networks:
-      - sscrms-network
+      - thecomplainbox-network
 
 volumes:
   mysql-data:
@@ -145,5 +131,5 @@ volumes:
   redis-data:
 
 networks:
-  sscrms-network:
+  thecomplainbox-network:
     driver: bridge

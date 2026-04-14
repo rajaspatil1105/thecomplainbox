@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# SSCRMS v2.0 Startup Script
+# The Complain Box v2.0 Startup Script
 # Automates project startup with Docker and npm
 
 $projectRoot = "c:\Users\patil\OneDrive\Desktop\thecomplainbox"
@@ -8,7 +8,7 @@ $frontendDir = "$projectRoot\frontend"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  SSCRMS v2.0 - Startup Script" -ForegroundColor Cyan
+Write-Host "  The Complain Box v2.0 - Startup Script" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -102,7 +102,7 @@ Write-Host "Frontend starting in new window..." -ForegroundColor Green
 # Final message
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "  SSCRMS v2.0 is starting!" -ForegroundColor Green
+Write-Host "  The Complain Box v2.0 is starting!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 

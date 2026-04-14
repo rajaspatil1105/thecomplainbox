@@ -1,7 +1,7 @@
 {
-  "name": "sscrms-backend",
+  "name": "thecomplainbox-backend",
   "version": "2.0.0",
-  "description": "Smart Student Complaint & Resolution Management System - Backend API",
+  "description": "The Complain Box - Backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

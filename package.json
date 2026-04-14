@@ -1,0 +1,11 @@
+{
+  "name": "thecomplainbox",
+  "private": true,
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File ./RUN_EVERYTHING.ps1",
+    "diagnose": "powershell -ExecutionPolicy Bypass -File ./DIAGNOSE.ps1",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "seed": "cd backend && npm run seed"
+  }
+}

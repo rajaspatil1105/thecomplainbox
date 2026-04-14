@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { complaintAPI } from '../services/api';
-import { AiOutlineClose } from 'react-icons/ai';
+import AppShell from '../components/AppShell';
+import FileUpload from '../components/FileUpload';
+import Modal from '../components/Modal';
 
 /**
  * New Complaint Form Page
@@ -21,7 +22,8 @@ export default function ComplaintFormPage() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const fileInputRef = useRef(null);
+  const [tokenModalOpen, setTokenModalOpen] = useState(false);
+  const [trackingToken, setTrackingToken] = useState('');
 
   const categories = [
     'security',
@@ -37,30 +39,6 @@ export default function ComplaintFormPage() {
   const MIN_DESCRIPTION_LENGTH = 30;
   const MAX_FILES = 3;
   const MAX_FILE_SIZE_MB = 10;
-
-  const handleFileSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files || []);
-
-    // Validate file count
-    if (files.length + selectedFiles.length > MAX_FILES) {
-      addNotification(`Maximum ${MAX_FILES} files allowed`, 'error');
-      return;
-    }
-
-    // Validate file size
-    for (const file of selectedFiles) {
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        addNotification(`File ${file.name} exceeds ${MAX_FILE_SIZE_MB}MB limit`, 'error');
-        return;
-      }
-    }
-
-    setFiles([...files, ...selectedFiles]);
-  };
-
-  const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,8 +72,9 @@ export default function ComplaintFormPage() {
 
       // If anonymous, show token
       if (isAnonymous && response.data.anonymous_token) {
-        // TODO: Show modal with token
-        alert(`Your tracking token:\n\n${response.data.anonymous_token}\n\nSave this to track your complaint!`);
+        setTrackingToken(response.data.anonymous_token);
+        setTokenModalOpen(true);
+        return;
       }
 
       navigate('/dashboard');
@@ -109,53 +88,54 @@ export default function ComplaintFormPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Submit New Complaint</h1>
+    <AppShell pageTitle="Submit Complaint">
+      <div className="max-w-4xl">
+        <h1 className="text-3xl font-black text-[#121212] uppercase tracking-wider mb-8">Submit New Complaint</h1>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="mb-6 p-4 bg-[#D02020] border-2 border-[#121212] rounded-none text-white text-xs font-bold uppercase tracking-widest">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white border-4 border-[#121212] shadow-[8px_8px_0px_0px_#121212] p-6 space-y-6">
         {/* Title */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Title *</label>
+          <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-2">Title *</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Brief title of your complaint"
             maxLength="200"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border-2 border-[#121212] rounded-none focus:outline-none focus:border-[#1040C0]"
           />
-          <p className="text-sm text-gray-500 mt-1">{title.length}/200</p>
+          <p className="text-xs text-[#121212]/60 mt-1">{title.length}/200</p>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Description *</label>
+          <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-2">Description *</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detailed description (minimum 30 characters)"
             minLength={MIN_DESCRIPTION_LENGTH}
             rows="6"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border-2 border-[#121212] rounded-none focus:outline-none focus:border-[#1040C0]"
           />
-          <p className={`text-sm mt-1 ${description.length < MIN_DESCRIPTION_LENGTH ? 'text-red-600' : 'text-gray-500'}`}>
+          <p className={`text-xs mt-1 ${description.length < MIN_DESCRIPTION_LENGTH ? 'text-[#D02020] font-bold' : 'text-[#121212]/60'}`}>
             {description.length}/{MIN_DESCRIPTION_LENGTH} characters {description.length < MIN_DESCRIPTION_LENGTH && ' •  Too short'}
           </p>
         </div>
 
         {/* Category */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Category (Optional)</label>
+          <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-2">Category (Optional)</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border-2 border-[#121212] rounded-none focus:outline-none focus:border-[#1040C0]"
           >
             <option value="">Select a category...</option>
             {categories.map(cat => (
@@ -166,40 +146,12 @@ export default function ComplaintFormPage() {
 
         {/* File Upload */}
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Evidence Files (Optional)</label>
-          <p className="text-sm text-gray-600 mb-2">Max {MAX_FILES} files, {MAX_FILE_SIZE_MB}MB each (JPG, PNG, MP4, PDF)</p>
-          
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500"
-          >
-            <p className="text-gray-600">Drag and drop files here or click to select</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              onChange={handleFileSelect}
-              accept=".jpg,.jpeg,.png,.mp4,.pdf"
-            />
-          </div>
-
-          {files.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {files.map((file, index) => (
-                <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(index)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <AiOutlineClose />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-2">Evidence Files (Optional)</label>
+          <FileUpload
+            onFilesSelect={setFiles}
+            maxFiles={MAX_FILES}
+            maxSizeMB={MAX_FILE_SIZE_MB}
+          />
         </div>
 
         {/* Anonymous Submission */}
@@ -209,11 +161,11 @@ export default function ComplaintFormPage() {
               type="checkbox"
               checked={isAnonymous}
               onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4"
             />
-            <span className="text-gray-700">Submit anonymously</span>
+            <span className="text-[#121212] font-medium">Submit anonymously</span>
           </label>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs text-[#121212]/70 mt-1">
             {isAnonymous
               ? 'Your identity will be hidden. You can track using a token.'
               : 'Your name will be visible to the authority.'}
@@ -225,19 +177,44 @@ export default function ComplaintFormPage() {
           <button
             type="submit"
             disabled={loading || description.length < MIN_DESCRIPTION_LENGTH}
-            className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 py-3 px-6 bg-[#1040C0] text-white border-2 border-[#121212] rounded-none font-black text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_#121212] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-y-1 active:shadow-[2px_2px_0px_0px_#121212] transition-all duration-100 disabled:opacity-50"
           >
             {loading ? 'Submitting...' : 'Submit Complaint'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-300"
+          <Link
+            to="/dashboard"
+            className="flex-1 py-3 px-6 bg-white text-[#121212] border-2 border-[#121212] rounded-none font-black text-sm uppercase tracking-widest text-center"
           >
             Cancel
-          </button>
+          </Link>
         </div>
       </form>
-    </div>
+
+      <Modal
+        isOpen={tokenModalOpen}
+        onClose={() => {}}
+        title="Save Your Tracking Token"
+        closeButton={false}
+        footer={(
+          <button
+            className="py-3 px-5 bg-[#1040C0] text-white border-2 border-[#121212] font-black text-xs uppercase tracking-widest"
+            onClick={() => {
+              setTokenModalOpen(false);
+              navigate('/dashboard');
+            }}
+          >
+            I Saved It
+          </button>
+        )}
+      >
+        <p className="text-sm text-[#121212] font-medium mb-3">
+          This token is shown only once. Save it to track anonymous complaints.
+        </p>
+        <div className="p-3 border-2 border-[#121212] bg-[#F0F0F0] font-mono text-sm break-all">
+          {trackingToken}
+        </div>
+      </Modal>
+      </div>
+    </AppShell>
   );
 }

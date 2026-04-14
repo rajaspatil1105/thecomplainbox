@@ -1,4 +1,4 @@
-# SSCRMS v2.0 - Smart Student Complaint & Resolution Management System
+# The Complain Box v2.0
 
 A production-grade, AI-powered web application for educational institutions enabling students to submit complaints (named or anonymous), track resolution in real time, and rate outcomes — while giving committees and administrators structured tools to manage, route, and close complaints with full accountability.
 
@@ -263,13 +263,13 @@ docker-compose logs -f frontend
 ### Database Access
 ```bash
 # MySQL
-docker exec -it sscrms-mysql mysql -u sscrms_user -p sscrms_db
+docker exec -it thecomplainbox-mysql mysql -u thecomplainbox_user -p thecomplainbox_db
 
 # MongoDB
-docker exec -it sscrms-mongodb mongosh sscrms_db
+docker exec -it thecomplainbox-mongodb mongosh thecomplainbox_db
 
 # Redis
-docker exec -it sscrms-redis redis-cli
+docker exec -it thecomplainbox-redis redis-cli
 ```
 
 ### Health Checks
@@ -305,7 +305,7 @@ JWT_SECRET=<generate-with-openssl-rand-hex-32>
 GEMINI_API_KEY=<prod-key>
 FRONTEND_URL=https://your-domain.com
 MYSQL_PASSWORD=<strong-random-password>
-MONGO_URI=mongodb://user:pass@mongo-prod/sscrms?authSource=admin
+MONGO_URI=mongodb://user:pass@mongo-prod/thecomplainbox?authSource=admin
 REDIS_URL=redis://user:pass@redis-prod:6379
 SMTP_HOST=<production-smtp-server>
 ```
@@ -342,7 +342,7 @@ docker-compose logs mysql
 rm ~/.bashrc  # or clear localStorage in browser console
 
 # Check session exists in Redis
-docker exec sscrms-redis redis-cli get session:<user_id>
+docker exec thecomplainbox-redis redis-cli get session:<user_id>
 ```
 
 ## Support & Contributing

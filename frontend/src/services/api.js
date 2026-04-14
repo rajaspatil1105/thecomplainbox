@@ -50,7 +50,7 @@ export const complaintAPI = {
 
 export const dashboardAPI = {
   getStudentDashboard: () => apiClient.get('/dashboard/student'),
-  getAuthorityDashboard: () => apiClient.get('/dashboard/authority'),
+  getAuthorityDashboard: (params = {}) => apiClient.get('/dashboard/authority', { params }),
   getAdminDashboard: () => apiClient.get('/dashboard/admin'),
   getPrincipalDashboard: () => apiClient.get('/dashboard/principal')
 };
@@ -70,6 +70,7 @@ export const feedbackAPI = {
 
 export const adminAPI = {
   getAuditLogs: (params) => apiClient.get('/admin/audit-logs', { params }),
+  exportAuditLogs: (params) => apiClient.get('/admin/audit-logs/export', { params, responseType: 'blob' }),
   getRoutingQueue: () => apiClient.get('/admin/routing-queue'),
   routeComplaint: (id, committeeId) =>
     apiClient.patch(`/admin/complaints/${id}/route`, { committee_id: committeeId }),

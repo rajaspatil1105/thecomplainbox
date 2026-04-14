@@ -37,6 +37,7 @@ class AdminController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name', 'category_tag'],
             required: false
           }
@@ -311,6 +312,7 @@ class AdminController {
         include: [
           {
             model: User,
+            as: 'User',
             attributes: ['name', 'email', 'role'],
             required: false
           }
@@ -361,6 +363,7 @@ class AdminController {
         include: [
           {
             model: User,
+            as: 'User',
             attributes: ['name', 'email'],
             required: false
           }
@@ -423,6 +426,7 @@ class AdminController {
         include: [
           {
             model: Committee,
+            as: 'committee',
             attributes: ['name', 'category_tag']
           }
         ],

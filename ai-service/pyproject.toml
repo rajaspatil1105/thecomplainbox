@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sscrms-ai-service"
+name = "thecomplainbox-ai-service"
 version = "2.0.0"
-description = "SSCRMS AI Microservice - Gemini-powered complaint analysis"
+description = "The Complain Box AI Microservice - Gemini-powered complaint analysis"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.104.1",

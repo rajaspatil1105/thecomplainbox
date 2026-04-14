@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { authAPI } from '../services/api';
-import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { Eye, EyeOff } from 'lucide-react';
 
 /**
  * Login Page
@@ -42,7 +42,7 @@ export default function LoginPage() {
         principal: '/principal/dashboard'
       };
 
-      navigate(roleRoutes[user.role] || '/dashboard');
+      navigate(roleRoutes[user.role] || '/dashboard', { replace: true });
     } catch (err) {
       const message = err.response?.data?.error || 'Login failed';
       setError(message);
@@ -53,76 +53,108 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F0F0] py-12 px-4 sm:px-6 lg:px-8 font-['Outfit']">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">SSCRMS</h1>
-          <p className="text-gray-600 mt-2">Smart Student Complaint Management System</p>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-black text-[#121212] uppercase tracking-tighter">
+            The Complain Box
+          </h1>
+          <p className="text-sm font-bold text-[#121212]/60 mt-3 uppercase tracking-widest">
+            Smart Student Complaint Management System
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white px-6 py-8 rounded-lg shadow">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
+        {/* Login Card */}
+        <form
+          onSubmit={handleLogin}
+          className="bg-white px-8 py-12 border-4 border-[#121212] rounded-none shadow-[8px_8px_0px_0px_#121212] animate-fade-in-up"
+        >
+          <h2 className="text-2xl font-black text-[#121212] mb-8 uppercase tracking-wider">
+            Sign In
+          </h2>
 
+          {/* Error Banner */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+            <div className="mb-6 p-4 bg-[#D02020] border-2 border-[#121212] rounded-none text-white text-xs font-bold uppercase tracking-widest">
               {error}
             </div>
           )}
 
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">Email Address</label>
+          {/* Email Field */}
+          <div className="mb-6">
+            <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-3">
+              Email Address
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border-2 border-[#121212] rounded-none bg-white text-[#121212] font-medium focus:outline-none focus:bg-[#1040C0]/5 focus:border-[#1040C0] transition-colors placeholder-[#121212]/40 appearance-none"
               placeholder="your.email@institution.edu"
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2">Password</label>
+          {/* Password Field */}
+          <div className="mb-8">
+            <label className="block text-[#121212] font-bold text-xs uppercase tracking-widest mb-3">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-[#121212] rounded-none bg-white text-[#121212] font-medium focus:outline-none focus:bg-[#1040C0]/5 focus:border-[#1040C0] transition-colors placeholder-[#121212]/40 appearance-none"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-500"
+                className="absolute right-4 top-3.5 text-[#121212] hover:text-[#1040C0] transition-colors"
               >
-                {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
+          {/* Sign In Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-4 px-6 bg-[#1040C0] text-white border-2 border-[#121212] rounded-none font-black text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_#121212] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-y-1 active:shadow-[2px_2px_0px_0px_#121212] transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
-          <div className="mt-4 text-center text-sm">
-            <p className="text-gray-600">
+          {/* Register Link */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-[#121212] font-medium mb-2">
               Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-medium">
+              <Link to="/register" className="font-black text-[#1040C0] hover:text-[#1040C0]/80 underline">
                 Register here
               </Link>
             </p>
           </div>
 
-          <div className="mt-4 text-center text-sm">
-            <Link to="/forgot-password" className="text-blue-600 hover:underline">
-              Forgot password?
-            </Link>
+          {/* Forgot Password Link */}
+          <div className="mt-2 text-center">
+            <div className="flex items-center justify-center gap-4 text-xs">
+              <Link
+                to="/forgot-password"
+                className="text-[#121212] font-bold hover:text-[#1040C0] hover:underline transition-colors"
+              >
+                Forgot password?
+              </Link>
+              <Link
+                to="/track"
+                className="text-[#1040C0] font-black underline"
+              >
+                Track anonymously
+              </Link>
+            </div>
           </div>
         </form>
       </div>
