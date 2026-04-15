@@ -474,6 +474,7 @@ class AdminController {
       }
 
       complaint.committee_id = committee_id;
+      complaint.assigned_to = complaint.assigned_to || user_id;
       complaint.status = 'assigned';
       await complaint.save();
 

@@ -27,7 +27,7 @@ const EvidenceFile = sequelize.define('EvidenceFile', {
     type: DataTypes.STRING(20),
     allowNull: false,
     validate: {
-      isIn: [['jpg', 'png', 'mp4', 'pdf']]
+      isIn: [['jpg', 'jpeg', 'png', 'mp4', 'pdf']]
     }
   },
   file_size_kb: {

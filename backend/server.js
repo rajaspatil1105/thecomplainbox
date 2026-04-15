@@ -64,8 +64,34 @@ const retryOperation = async (label, operation, { required = true } = {}) => {
 app.use(helmet());
 
 // CORS configuration
+const defaultFrontendOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001'
+];
+
+const envConfiguredOrigins = [process.env.FRONTEND_URLS, process.env.FRONTEND_URL]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...defaultFrontendOrigins, ...envConfiguredOrigins])];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl, Postman) that do not send Origin
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true
 }));
 
@@ -131,7 +157,7 @@ const startServer = async () => {
     const server = app.listen(PORT, () => {
       console.log(`✓ Backend API running on port ${PORT}`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`✓ CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+      console.log(`✓ CORS enabled for: ${allowedOrigins.join(', ')}`);
     });
 
     // Start background escalation job

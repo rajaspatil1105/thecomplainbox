@@ -20,7 +20,7 @@ router.post('/',
   [
     body('title').notEmpty().trim(),
     body('description').isLength({ min: 30 }),
-    body('isAnonymous').optional().isBoolean()
+    body('isAnonymous').optional().isBoolean().toBoolean()
   ],
   complaintController.submitComplaint
 );

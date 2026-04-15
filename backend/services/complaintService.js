@@ -53,7 +53,10 @@ class ComplaintService {
       // 1. Run TF-IDF duplicate check BEFORE Gemini
       const duplicateCheck = await AIService.checkDuplicate(description);
 
-      let complaintCategory = manualCategory || 'other';
+      const hasManualCategory = typeof manualCategory === 'string' && manualCategory.trim().length > 0;
+      let complaintCategory = hasManualCategory
+        ? manualCategory.trim().toLowerCase()
+        : 'other';
       let severity = 'medium';
       let priority = 'P3';
       let aiConfidence = 0;
@@ -67,7 +70,9 @@ class ComplaintService {
         );
 
         if (aiAnalysis) {
-          complaintCategory = aiAnalysis.category;
+          if (!hasManualCategory && aiAnalysis.category) {
+            complaintCategory = String(aiAnalysis.category).trim().toLowerCase();
+          }
           severity = aiAnalysis.severity;
           aiConfidence = aiAnalysis.confidence;
 
@@ -76,8 +81,9 @@ class ComplaintService {
         }
       }
 
-      // 3. Compute SLA deadline using stored procedure
-      const slaDeadline = await this.computeSLADeadline(severity);
+      // 3. Compute SLA deadline using the same submission timestamp to avoid timezone skew
+      const submittedAt = new Date();
+      const slaDeadline = await this.computeSLADeadline(severity, submittedAt);
 
       // 4. Create complaint record
       const complaintId = uuidv4();
@@ -95,7 +101,7 @@ class ComplaintService {
         ai_confidence: aiConfidence,
         is_duplicate: IsDuplicate,
         sla_deadline: slaDeadline,
-        submitted_at: new Date()
+        submitted_at: submittedAt
       }, { transaction });
 
       // 5. Store anonymous token in Redis (90 days TTL)
@@ -111,13 +117,17 @@ class ComplaintService {
       const fileRecords = [];
       if (uploadedFiles && uploadedFiles.length > 0) {
         for (const file of uploadedFiles) {
+          // Normalize file type (e.g., jpeg -> jpg, JSON -> lowercase, etc.)
+          let fileType = file.mimetype.split('/')[1].toLowerCase();
+          if (fileType === 'jpeg') fileType = 'jpg';
+          
           const fileRecord = await EvidenceFile.create({
             file_id: uuidv4(),
             complaint_id: complaintId,
             uploaded_by: studentId,
             file_name: file.originalname,
             file_path: file.path,
-            file_type: file.mimetype.split('/')[1],
+            file_type: fileType,
             file_size_kb: Math.ceil(file.size / 1024)
           }, { transaction });
 
@@ -125,30 +135,32 @@ class ComplaintService {
         }
       }
 
-      // 7. Auto-route to committee if AI confidence is high
-      if (aiConfidence >= 0.65) {
-        const committee = await this.findCommitteeByCategory(complaintCategory);
-        
-        if (committee) {
-          await complaint.update({
-            committee_id: committee.committee_id,
-            status: 'assigned'
-          }, { transaction });
-        }
+      // 7. Route complaint to committee based on complaint category
+      const committee = await this.findCommitteeByCategory(complaintCategory);
+      if (committee) {
+        await complaint.update({
+          committee_id: committee.committee_id
+        }, { transaction });
       }
 
       // 8. Update TF-IDF cache
       await AIService.updateTFIDFCache(complaintId, description);
 
-      // 9. Send notifications
+      await transaction.commit();
+
+      // 9. Send notifications (best-effort)
       if (!isAnonymous) {
         const student = await User.findByPk(studentId);
         if (student) {
-          await EmailService.sendComplaintSubmittedEmail(
-            student.email,
-            complaintId,
-            false
-          );
+          try {
+            await EmailService.sendComplaintSubmittedEmail(
+              student.email,
+              complaintId,
+              false
+            );
+          } catch (notificationError) {
+            console.error('Failed to send complaint submitted email:', notificationError.message);
+          }
         }
       }
 
@@ -156,15 +168,17 @@ class ComplaintService {
       if (complaint.committee_id) {
         const committee = await Committee.findByPk(complaint.committee_id);
         if (committee) {
-          await EmailService.sendComplaintAssignedEmail(
-            committee.email_alias || committee.name,
-            title,
-            committee.head_user_id
-          );
+          try {
+            await EmailService.sendComplaintAssignedEmail(
+              committee.email_alias || committee.name,
+              title,
+              committee.head_user_id
+            );
+          } catch (notificationError) {
+            console.error('Failed to send complaint assignment email:', notificationError.message);
+          }
         }
       }
-
-      await transaction.commit();
 
       // Return response with token ONLY for anonymous complaints
       return {
@@ -194,14 +208,31 @@ class ComplaintService {
   }
 
   /**
+   * Normalize category tags used for committee routing
+   */
+  static normalizeCategoryTag(category) {
+    if (!category || typeof category !== 'string') {
+      return null;
+    }
+
+    const normalized = category.trim().toLowerCase();
+    const aliasMap = {
+      infrastructure: 'hostel',
+      harassment: 'ragging'
+    };
+
+    return aliasMap[normalized] || normalized;
+  }
+
+  /**
    * Compute SLA deadline via stored procedure
    */
-  static async computeSLADeadline(severity) {
+  static async computeSLADeadline(severity, submittedAt) {
     try {
       const result = await sequelize.query(
-        'CALL compute_sla_deadline(:severity, NOW(), @deadline)',
+        'CALL compute_sla_deadline(:severity, :submittedAt, @deadline)',
         {
-          replacements: { severity },
+          replacements: { severity, submittedAt },
           raw: true
         }
       );
@@ -222,8 +253,14 @@ class ComplaintService {
    * Find committee by category
    */
   static async findCommitteeByCategory(category) {
+    const normalizedCategory = this.normalizeCategoryTag(category);
+
+    if (!normalizedCategory || normalizedCategory === 'other') {
+      return null;
+    }
+
     return Committee.findOne({
-      where: { category_tag: category }
+      where: { category_tag: normalizedCategory }
     });
   }
 
@@ -270,7 +307,8 @@ class ComplaintService {
       // Update status
       await complaint.update({
         status: newStatus,
-        resolved_at: (newStatus === 'closed' || newStatus === 'resolved') ? new Date() : complaint.resolved_at
+        resolved_at: (newStatus === 'closed' || newStatus === 'resolved') ? new Date() : complaint.resolved_at,
+        assigned_to: complaint.assigned_to || changedById
       }, { transaction });
 
       // Trigger will auto-create status log entry
@@ -291,11 +329,15 @@ class ComplaintService {
       if (!complaint.is_anonymous && complaint.student_id) {
         const student = await User.findByPk(complaint.student_id);
         if (student) {
-          await EmailService.sendStatusUpdateEmail(
-            student.email,
-            complaint.title,
-            newStatus
-          );
+          try {
+            await EmailService.sendStatusUpdateEmail(
+              student.email,
+              complaint.title,
+              newStatus
+            );
+          } catch (notificationError) {
+            console.error('Failed to send status update email:', notificationError.message);
+          }
         }
       }
 
@@ -317,7 +359,10 @@ class ComplaintService {
         throw new Error('Complaint not found');
       }
 
-      await complaint.update({ status: 'escalated' });
+      await complaint.update({
+        status: 'escalated',
+        assigned_to: complaint.assigned_to || admin_user_id
+      });
 
       // Notify committee head and admin
       const recipients = [];
@@ -341,11 +386,15 @@ class ComplaintService {
 
       // Send escalation emails
       if (recipients.length > 0) {
-        await EmailService.sendEscalationEmail(
-          recipients,
-          complaint.title,
-          complaint.priority
-        );
+        try {
+          await EmailService.sendEscalationEmail(
+            recipients,
+            complaint.title,
+            complaint.priority
+          );
+        } catch (notificationError) {
+          console.error('Failed to send escalation email:', notificationError.message);
+        }
       }
 
       return complaint;

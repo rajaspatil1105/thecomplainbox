@@ -1,5 +1,6 @@
 const AuthService = require('../services/authService');
 const { validationResult } = require('express-validator');
+const redisClient = require('../config/redis');
 
 /**
  * Authentication Controller
@@ -51,6 +52,15 @@ class AuthController {
       const { email, password } = req.body;
 
       const result = await AuthService.login(email, password);
+
+      // Reset login rate-limit counter after a successful login.
+      const ip = req.ip || req.connection.remoteAddress;
+      const rateLimitKey = `rate_limit:login:${ip}`;
+      try {
+        await redisClient.del(rateLimitKey);
+      } catch (rateLimitError) {
+        console.warn('Failed to clear login rate-limit key:', rateLimitError.message);
+      }
 
       res.status(200).json({
         message: 'Login successful',

@@ -23,6 +23,7 @@ class ComplaintController {
 
       const { user_id } = req.user;
       const { title, description, isAnonymous, category } = req.body;
+      const parsedIsAnonymous = isAnonymous === true || isAnonymous === 'true';
 
       // Check submission rate limit
       if (req.submissionCount > 5) {
@@ -34,7 +35,7 @@ class ComplaintController {
       const complaintData = {
         title,
         description,
-        isAnonymous: isAnonymous || false,
+        isAnonymous: parsedIsAnonymous,
         category
       };
 

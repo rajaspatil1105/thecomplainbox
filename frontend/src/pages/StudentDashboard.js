@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotification } from '../hooks/useNotification';
 import { dashboardAPI } from '../services/api';
@@ -18,21 +18,49 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    loadComplaints();
-  }, []);
-
-  const loadComplaints = async () => {
+  const loadComplaints = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
+
       const response = await dashboardAPI.getStudentDashboard();
       setComplaints(response?.data?.complaints || []);
     } catch (error) {
-      addNotification('Failed to load complaints', 'error');
+      if (!silent) {
+        addNotification('Failed to load complaints', 'error');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, [addNotification]);
+
+  useEffect(() => {
+    loadComplaints();
+
+    // Keep status fresh when committee updates happen in another session.
+    const intervalId = setInterval(() => {
+      loadComplaints(true);
+    }, 15000);
+
+    const handleFocus = () => loadComplaints(true);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadComplaints(true);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [loadComplaints]);
 
   const filteredComplaints = useMemo(() => {
     if (filter === 'all') return complaints;
